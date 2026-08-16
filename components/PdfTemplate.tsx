@@ -2,25 +2,22 @@
 
 import { forwardRef } from "react";
 import type { Student } from "@/app/page";
-import { 
-  SUBJECT, 
-  TUTOR, 
-  METRIC_LABELS, 
-  getPercent, 
-  getBarColor, 
-  getTextColor, 
-  type MetricKey 
+import {
+  METRIC_KEYS,
+  METRIC_LABELS,
+  getPercent,
+  getBarColor,
+  getTextColor,
 } from "./ReportCard";
 
 interface PdfTemplateProps {
   student: Student;
   daysInMonth: number;
-  attendancePercent: number;
   overallPercent: number;
 }
 
 const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
-  ({ student, daysInMonth, attendancePercent, overallPercent }, ref) => {
+  ({ student, daysInMonth, overallPercent }, ref) => {
     return (
       <div className="pointer-events-none absolute left-[-9999px] top-0 h-0 w-0 overflow-hidden">
         <div ref={ref} className="w-[210mm] min-h-[297mm] bg-[#FDFBF7] p-14">
@@ -46,10 +43,11 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
             </div>
             <div className="px-3 py-3 text-center">
               <p className="font-[family-name:var(--font-merriweather)] text-[9px] uppercase tracking-[0.2em] text-[#1A3A34]/50">
-                Grade
+                Standard
               </p>
               <p className="mt-1 font-[family-name:var(--font-merriweather)] text-sm font-bold text-[#1A3A34]">
-                {student.grade}
+                {student.standard}
+                {student.section ? ` - ${student.section}` : ""}
               </p>
             </div>
             <div className="px-3 py-3 text-center">
@@ -57,7 +55,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
                 Subject
               </p>
               <p className="mt-1 font-[family-name:var(--font-merriweather)] text-sm font-bold text-[#1A3A34]">
-                {SUBJECT}
+                {student.subject}
               </p>
             </div>
             <div className="px-3 py-3 text-center">
@@ -65,7 +63,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
                 Tutor
               </p>
               <p className="mt-1 font-[family-name:var(--font-merriweather)] text-sm font-bold text-[#1A3A34]">
-                {TUTOR}
+                {student.tutor}
               </p>
             </div>
           </div>
@@ -101,8 +99,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
                 Classes Attended
               </h2>
               <span className="font-[family-name:var(--font-plex-mono)] text-xs text-[#1A3A34]/60">
-                {student.attendedDays.length} / {daysInMonth} days &middot;{" "}
-                {attendancePercent}% attendance
+                {student.attendedDays.length} / {daysInMonth} days
               </span>
             </div>
             <div className="grid grid-cols-7 border-l border-t border-[#1A3A34]/15">
@@ -141,7 +138,7 @@ const PdfTemplate = forwardRef<HTMLDivElement, PdfTemplateProps>(
               </div>
             </div>
             <div className="flex flex-col gap-5">
-              {(["assignments", "quizzes", "worksheets"] as MetricKey[]).map(
+              {METRIC_KEYS.map(
                 (key) => {
                   const metric = student.metrics[key];
                   const percent = getPercent(metric);

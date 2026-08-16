@@ -3,24 +3,7 @@
 import { useRef, useState } from "react";
 import type { Student } from "@/app/page";
 import PdfTemplate from "./PdfTemplate";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-export const SUBJECT = "Mathematics";
-export const TUTOR = "Rachal";
+import { MONTHS } from "@/lib/formOptions";
 
 interface ReportCardProps {
   student: Student | null;
@@ -29,11 +12,27 @@ interface ReportCardProps {
 
 export type MetricKey = "assignments" | "quizzes" | "worksheets";
 
+export const METRIC_KEYS: MetricKey[] = [
+  "assignments",
+  "quizzes",
+  "worksheets",
+];
+
 export const METRIC_LABELS: Record<MetricKey, string> = {
   assignments: "Assignments",
   quizzes: "Quizzes",
   worksheets: "Worksheets",
 };
+
+/**
+ * One button recipe, two tones. Shape, padding, type scale and transition are
+ * shared so "Add" and "Clear" read as the same control, and only the tone
+ * changes to mark the destructive one.
+ */
+const ACTION_BUTTON =
+  "rounded-lg px-4 py-2 font-[family-name:var(--font-lora)] text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-40";
+export const NEUTRAL_ACTION = `${ACTION_BUTTON} bg-[#1A3A34]/10 text-[#1A3A34] hover:bg-[#1A3A34]/20`;
+export const DANGER_ACTION = `${ACTION_BUTTON} bg-rose-600/10 text-rose-700 hover:bg-rose-600/20`;
 
 export const getPercent = (m: { completed: number; total: number }) =>
   m.total > 0 ? Math.min(100, Math.round((m.completed / m.total) * 100)) : 0;
@@ -93,17 +92,17 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
     }
   });
 
+  const hasMetricData = METRIC_KEYS.some(
+    (key) =>
+      student.metrics[key].completed > 0 || student.metrics[key].total > 0
+  );
+
   const assignmentsPercent = getPercent(student.metrics.assignments);
   const quizzesPercent = getPercent(student.metrics.quizzes);
   const worksheetsPercent = getPercent(student.metrics.worksheets);
   const overallPercent = Math.round(
     (assignmentsPercent + quizzesPercent + worksheetsPercent) / 3
   );
-
-  const attendancePercent =
-    daysInMonth > 0
-      ? Math.round((student.attendedDays.length / daysInMonth) * 100)
-      : 0;
 
   const toggleDay = (day: number) => {
     const attended = student.attendedDays.includes(day)
@@ -115,7 +114,13 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
   const addTopic = () => {
     const trimmed = newTopic.trim();
     if (!trimmed) return;
-    onUpdate(student.id, { topics: [...student.topics, trimmed] });
+    // Pills sit side by side, so an exact repeat just reads as a rendering bug.
+    const isDuplicate = student.topics.some(
+      (topic) => topic.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (!isDuplicate) {
+      onUpdate(student.id, { topics: [...student.topics, trimmed] });
+    }
     setNewTopic("");
   };
 
@@ -229,53 +234,38 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
             </p>
             <dl className="mt-1 flex flex-col gap-0.5 font-[family-name:var(--font-plex-mono)] text-xs text-[#1A3A34]/70">
               <div className="flex items-center gap-1.5 sm:justify-end">
-                <dt className="text-[#1A3A34]/40">Grade:</dt>
-                <dd>{student.grade}</dd>
+                <dt className="text-[#1A3A34]/40">Standard:</dt>
+                <dd>
+                  {student.standard}
+                  {student.section ? ` - ${student.section}` : ""}
+                </dd>
               </div>
               <div className="flex items-center gap-1.5 sm:justify-end">
                 <dt className="text-[#1A3A34]/40">Subject:</dt>
-                <dd>{SUBJECT}</dd>
+                <dd>{student.subject}</dd>
               </div>
               <div className="flex items-center gap-1.5 sm:justify-end">
                 <dt className="text-[#1A3A34]/40">Tutor:</dt>
-                <dd>{TUTOR}</dd>
+                <dd>{student.tutor}</dd>
               </div>
             </dl>
           </div>
         </div>
 
         <section className="mb-8">
-        <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="font-[family-name:var(--font-merriweather)] text-lg font-bold text-[#1A3A34]">
               Topics Covered
             </h3>
-            <button onClick={clearTopics} className="text-sm text-rose-500 hover:underline">Clear</button>
+            <button
+              onClick={clearTopics}
+              disabled={student.topics.length === 0}
+              className={DANGER_ACTION}
+            >
+              Clear
+            </button>
           </div>
-          <ul className="mb-3 flex flex-col gap-2">
-            {student.topics.length === 0 && (
-              <li className="font-[family-name:var(--font-lora)] text-sm italic text-[#1A3A34]/40">
-                No topics added yet.
-              </li>
-            )}
-            {student.topics.map((topic, index) => (
-              <li
-                key={index}
-                className="group flex items-center justify-between rounded-lg bg-[#1A3A34]/5 px-4 py-2 font-[family-name:var(--font-lora)] text-sm text-[#1A3A34]"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#1A3A34]/60" />
-                  {topic}
-                </span>
-                <button
-                  onClick={() => removeTopic(index)}
-                  className="text-[#1A3A34]/30 opacity-0 transition hover:text-rose-600 group-hover:opacity-100"
-                  aria-label={`Remove ${topic}`}
-                >
-                  ✕
-                </button>
-              </li>
-            ))}
-          </ul>
+
           <div className="flex gap-2">
             <input
               type="text"
@@ -292,11 +282,36 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
             />
             <button
               onClick={addTopic}
-              className="rounded-lg bg-[#1A3A34]/10 px-4 py-2 font-[family-name:var(--font-lora)] text-sm font-medium text-[#1A3A34] transition hover:bg-[#1A3A34]/20"
+              disabled={!newTopic.trim()}
+              className={NEUTRAL_ACTION}
             >
               Add
             </button>
           </div>
+
+          {student.topics.length === 0 ? (
+            <p className="mt-3 font-[family-name:var(--font-lora)] text-sm italic text-[#1A3A34]/40">
+              No topics added yet.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-wrap gap-2">
+              {student.topics.map((topic, index) => (
+                <li
+                  key={`${topic}-${index}`}
+                  className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[#1A3A34]/5 py-1.5 pl-3 pr-1.5 font-[family-name:var(--font-lora)] text-sm text-[#1A3A34] transition hover:bg-[#1A3A34]/10"
+                >
+                  <span className="truncate">{topic}</span>
+                  <button
+                    onClick={() => removeTopic(index)}
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] text-[#1A3A34]/40 transition hover:bg-rose-600/10 hover:text-rose-700"
+                    aria-label={`Remove ${topic}`}
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <section className="mb-8">
@@ -309,7 +324,13 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
               <span className="font-[family-name:var(--font-plex-mono)] text-xs text-[#1A3A34]/60">
                 {student.attendedDays.length} / {daysInMonth} days
               </span>
-              <button onClick={clearAttendance} className="text-sm text-rose-500 hover:underline">Clear</button>
+              <button
+                onClick={clearAttendance}
+                disabled={student.attendedDays.length === 0}
+                className={DANGER_ACTION}
+              >
+                Clear
+              </button>
             </div>
           </div>
           
@@ -349,11 +370,17 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
               <div className="flex items-center gap-2 rounded-full bg-[#1A3A34] px-4 py-1.5 font-[family-name:var(--font-plex-mono)] text-sm font-semibold text-[#FDFBF7]">
                 Overall Rating: {overallPercent}%
               </div>
-              <button onClick={clearMetrics} className="text-sm text-rose-500 hover:underline">Clear</button>
+              <button
+                onClick={clearMetrics}
+                disabled={!hasMetricData}
+                className={DANGER_ACTION}
+              >
+                Clear
+              </button>
             </div>
           </div>
           <div className="flex flex-col gap-5">
-            {(["assignments", "quizzes", "worksheets"] as MetricKey[]).map(
+            {METRIC_KEYS.map(
               (key) => {
                 const metric = student.metrics[key];
                 const percent = getPercent(metric);
@@ -412,12 +439,11 @@ export default function ReportCard({ student, onUpdate }: ReportCardProps) {
         </section>
       </div>
 
-      <PdfTemplate 
-        ref={pdfRef} 
-        student={student} 
-        daysInMonth={daysInMonth} 
-        attendancePercent={attendancePercent} 
-        overallPercent={overallPercent} 
+      <PdfTemplate
+        ref={pdfRef}
+        student={student}
+        daysInMonth={daysInMonth}
+        overallPercent={overallPercent}
       />
     </div>
   );

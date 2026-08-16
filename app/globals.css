@@ -24,3 +24,31 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Thin, theme-colored scrollbar for scroll areas like the sidebar, the
+   report panel, and the Combobox option list, in place of the browser's
+   default bulky one. Smooth scroll-behavior applies to both wheel/trackpad
+   scrolling and scrollIntoView jumps (e.g. keyboard nav in the dropdown). */
+.themed-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(26, 58, 52, 0.3) transparent;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.themed-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.themed-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(26, 58, 52, 0.3);
+  border-radius: 9999px;
+}
+
+.themed-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(26, 58, 52, 0.5);
+}

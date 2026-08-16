@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Merriweather, Lora, IBM_Plex_Mono } from "next/font/google";
+import { ConfirmProvider } from "@/components/ConfirmProvider";
+import { PromptProvider } from "@/components/PromptProvider";
 import "./globals.css";
 
 const merriweather = Merriweather({
@@ -37,7 +39,9 @@ export default function RootLayout({
       className={`${merriweather.variable} ${lora.variable} ${plexMono.variable}`}
     >
       <body className="font-[family-name:var(--font-lora)] bg-[#FDFBF7] text-[#1A3A34] antialiased">
-        {children}
+        <ConfirmProvider>
+          <PromptProvider>{children}</PromptProvider>
+        </ConfirmProvider>
       </body>
     </html>
   );

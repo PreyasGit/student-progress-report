@@ -31,7 +31,7 @@ export default function Home() {
         </header>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
-          <div className="min-h-0 overflow-y-auto pr-1 lg:h-full">
+          <div className="themed-scrollbar min-h-0 overflow-y-auto pr-1 lg:h-full">
             <StudentSidebar
               students={students}
               activeId={activeId}
@@ -40,7 +40,7 @@ export default function Home() {
               onDelete={deleteStudent}
             />
           </div>
-          <div className="min-h-0 overflow-y-auto pr-1 lg:h-full">
+          <div className="themed-scrollbar min-h-0 overflow-y-auto pr-1 lg:h-full">
             <ReportCard student={activeStudent} onUpdate={updateStudent} />
           </div>
         </div>
